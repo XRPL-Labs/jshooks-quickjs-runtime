@@ -1,13 +1,17 @@
 ## Build dependencies:
-
-- `wavm` (or set the `QJSC` value in the `Makefile` accordingly)
 - LLVM (`brew install llvm`)
-- [`libclang_rt.builtins-wasm32.a`](https://github.com/jedisct1/libclang_rt.builtins-wasm32.a)
-- [`wasi-sysroot`](https://github.com/WebAssembly/wasi-sdk/releases) installed in `/opt/wasi-sysroot`.
+- [`wasi-sdk(12)`](https://github.com/WebAssembly/wasi-sdk/releases).
 
-## Compilation (on MacOS):
+## Compilation
 
 ```sh
-export PATH=/usr/local/opt/llvm/bin:$PATH
-make
+wasicc cutils.c libunicode.c quickjs.c libregexp.c qjs.c quickjs-libc.c quickjs-libnet.c -o qjs.wasm -DCONFIG_VERSION='"version"' -D_WASI_EMULATED_SIGNAL -lwasi-emulated-signal -O3
+```
+
+## Run with WasmEdge(0.8.2-rc4+)
+
+```sh
+wasmedge --dir .:. qjs.wasm -e "console.log('hello')"
+
+wasmedge --dir .:. qjs.wasm repl.js
 ```

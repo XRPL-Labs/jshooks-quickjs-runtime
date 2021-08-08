@@ -41,8 +41,8 @@
 #include "cutils.h"
 #include "quickjs-libc.h"
 
-extern const uint8_t qjsc_repl[];
-extern const uint32_t qjsc_repl_size;
+const uint8_t qjsc_repl[];
+const uint32_t qjsc_repl_size;
 #ifdef CONFIG_BIGNUM
 extern const uint8_t qjsc_qjscalc[];
 extern const uint32_t qjsc_qjscalc_size;
