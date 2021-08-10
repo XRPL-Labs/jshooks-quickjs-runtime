@@ -16,5 +16,5 @@ wasmedge --dir .:. qjs.wasm -e "console.log('hello')"
 wasmedge --dir .:. qjs.wasm repl.js
 ```
 
-##Acknowledgment
+## Acknowledgment
 This project is fork from [dip-proto/quickjs-wasi](https://github.com/dip-proto/quickjs-wasi)
