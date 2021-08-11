@@ -5,7 +5,7 @@
 ## Compilation
 
 ```sh
-wasicc cutils.c libunicode.c quickjs.c libregexp.c qjs.c quickjs-libc.c quickjs-libnet.c -o qjs.wasm -DCONFIG_VERSION='"version"' -D_WASI_EMULATED_SIGNAL -lwasi-emulated-signal -O3
+wasicc cutils.c libunicode.c quickjs.c libregexp.c qjs.c quickjs-libc.c -o qjs.wasm -DCONFIG_VERSION='"version"' -D_WASI_EMULATED_SIGNAL -lwasi-emulated-signal -O3
 ```
 
 ## Run with WasmEdge(0.8.2-rc4+)
