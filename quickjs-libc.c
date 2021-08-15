@@ -2748,6 +2748,25 @@ void js_std_add_helpers(JSContext *ctx, int argc, char **argv)
     os_pending_signals = 0;
 }
 
+void js_std_add_console(JSContext *ctx){
+    JSValue global_obj, console, args;
+    /* XXX: should these global definitions be enumerable? */
+    global_obj = JS_GetGlobalObject(ctx);
+
+    console = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, console, "log", JS_NewCFunction(ctx, js_print, "log", 1));
+    JS_SetPropertyStr(ctx, global_obj, "console", console);
+    JS_SetPropertyStr(ctx, global_obj, "print", JS_NewCFunction(ctx, js_print, "print", 1));
+    
+    JS_FreeValue(ctx, global_obj);
+
+    /* XXX: not multi-context */
+    init_list_head(&os_rw_handlers);
+    init_list_head(&os_signal_handlers);
+    init_list_head(&os_timers);
+    os_pending_signals = 0;
+}
+
 void js_std_free_handlers(JSRuntime *rt)
 {
     struct list_head *el, *el1;
