@@ -64,6 +64,9 @@ typedef uint32_t JSAtom;
 #define JS_NAN_BOXING
 #endif
 
+#define JS_NAN_BOXING
+#define JS_PTR64_DEF(a)
+
 enum {
     /* all tags with a reference count are negative */
     JS_TAG_FIRST       = -11, /* first negative tag */
