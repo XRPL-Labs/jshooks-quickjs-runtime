@@ -435,6 +435,27 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
 }
 #endif /* !_WIN32 */
 
+/* load a file as a UTF-8 encoded string */
+static JSValue js_std_loadFile(JSContext *ctx, JSValueConst this_val,
+                               int argc, JSValueConst *argv)
+{
+    uint8_t *buf;
+    const char *filename;
+    JSValue ret;
+    size_t buf_len;
+
+    filename = JS_ToCString(ctx, argv[0]);
+    if (!filename)
+        return JS_EXCEPTION;
+    buf = js_load_file(ctx, &buf_len, filename);
+    JS_FreeCString(ctx, filename);
+    if (!buf)
+        return JS_NULL;
+    ret = JS_NewStringLen(ctx, (char *)buf, buf_len);
+    js_free(ctx, buf);
+    return ret;
+}
+
 int js_module_set_import_meta(JSContext *ctx, JSValueConst func_val,
                               JS_BOOL use_realpath, JS_BOOL is_main)
 {
@@ -1263,6 +1284,7 @@ static const JSCFunctionListEntry js_std_funcs[] = {
     JS_CFUNC_DEF("loadScript", 1, js_loadScript ),
     JS_CFUNC_DEF("getenv", 1, js_std_getenv ),
     JS_CFUNC_DEF("urlGet", 1, js_std_urlGet ),
+    JS_CFUNC_DEF("loadFile", 1, js_std_loadFile ),
 
     /* FILE I/O */
     JS_CFUNC_DEF("open", 2, js_std_open ),
