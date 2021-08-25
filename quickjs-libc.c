@@ -3817,6 +3817,19 @@ void js_std_add_helpers(JSContext *ctx, int argc, char **argv)
     JS_FreeValue(ctx, global_obj);
 }
 
+void js_std_add_console(JSContext *ctx){
+    JSValue global_obj, console, args;
+    /* XXX: should these global definitions be enumerable? */
+    global_obj = JS_GetGlobalObject(ctx);
+
+    console = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, console, "log", JS_NewCFunction(ctx, js_print, "log", 1));
+    JS_SetPropertyStr(ctx, global_obj, "console", console);
+    JS_SetPropertyStr(ctx, global_obj, "print", JS_NewCFunction(ctx, js_print, "print", 1));
+    JS_SetPropertyStr(ctx, global_obj, "__loadScript", JS_NewCFunction(ctx, js_loadScript, "__loadScript", 1));
+    JS_FreeValue(ctx, global_obj);
+}
+
 void js_std_init_handlers(JSRuntime *rt)
 {
     JSThreadState *ts;
