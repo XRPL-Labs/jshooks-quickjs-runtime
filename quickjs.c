@@ -50,7 +50,7 @@
 
 #define OPTIMIZE         1
 #define SHORT_OPCODES    1
-#if defined(EMSCRIPTEN)
+#if defined(EMSCRIPTEN) || defined(__wasi__)
 #define DIRECT_DISPATCH  0
 #else
 #define DIRECT_DISPATCH  1
@@ -62,18 +62,18 @@
 #define MALLOC_OVERHEAD  8
 #endif
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(__wasi__)
 /* define it if printf uses the RNDN rounding mode instead of RNDNA */
 #define CONFIG_PRINTF_RNDN
 #endif
 
 /* define to include Atomics.* operations which depend on the OS
    threads */
-#if !defined(EMSCRIPTEN)
+#if !defined(EMSCRIPTEN) && !defined(__wasi__)
 #define CONFIG_ATOMICS
 #endif
 
-#if !defined(EMSCRIPTEN)
+#if !defined(EMSCRIPTEN) && !defined(__wasi__)
 /* enable stack limitation */
 #define CONFIG_STACK_CHECK
 #endif
@@ -1682,6 +1682,8 @@ static inline size_t js_def_malloc_usable_size(void *ptr)
     return _msize(ptr);
 #elif defined(EMSCRIPTEN)
     return 0;
+#elif defined(__wasi__)
+    return 0;
 #elif defined(__linux__)
     return malloc_usable_size(ptr);
 #else
@@ -1755,6 +1757,8 @@ static const JSMallocFunctions def_malloc_funcs = {
 #elif defined(_WIN32)
     (size_t (*)(const void *))_msize,
 #elif defined(EMSCRIPTEN)
+    NULL,
+#elif defined(__wasi__)
     NULL,
 #elif defined(__linux__)
     (size_t (*)(const void *))malloc_usable_size,
