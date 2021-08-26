@@ -77,3 +77,7 @@ JSValue JS_NewCFunctionMagic_real(JSContext *ctx, JSCFunctionMagic *func, const 
 int js_eval_buf(JSContext *ctx, const void *buf, int buf_len, const char *filename, int eval_flags);
 
 void *memcpy(void *str1, const void *str2, size_t n);
+
+JSValue js_undefined();
+
+JSValue js_exception();
