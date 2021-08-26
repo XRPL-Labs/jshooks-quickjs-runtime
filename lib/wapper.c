@@ -135,3 +135,11 @@ int js_eval_buf(JSContext *ctx, const void *buf, int buf_len, const char *filena
     JS_FreeValue(ctx, val);
     return ret;
 }
+
+JSValue js_undefined(){
+    return JS_UNDEFINED;
+}
+
+JSValue js_exception(){
+    return JS_EXCEPTION;
+}
