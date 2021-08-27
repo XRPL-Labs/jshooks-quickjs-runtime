@@ -1,8 +1,8 @@
 /*
  * ECMA Test 262 Runner for QuickJS
  * 
- * Copyright (c) 2017-2018 Fabrice Bellard
- * Copyright (c) 2017-2018 Charlie Gordon
+ * Copyright (c) 2017-2021 Fabrice Bellard
+ * Copyright (c) 2017-2021 Charlie Gordon
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,9 +40,7 @@
 #include "quickjs-libc.h"
 
 /* enable test262 thread support to test SharedArrayBuffer and Atomics */
-//#define CONFIG_AGENT
-/* cross-realm tests (not supported yet) */
-//#define CONFIG_REALM
+#define CONFIG_AGENT
 
 #define CMD_NAME "run-test262"
 
@@ -385,8 +383,11 @@ static JSValue js_print(JSContext *ctx, JSValueConst this_val,
             str = JS_ToCString(ctx, argv[i]);
             if (!str)
                 return JS_EXCEPTION;
-            if (!strcmp(str, "Test262:AsyncTestComplete"))
+            if (!strcmp(str, "Test262:AsyncTestComplete")) {
                 async_done++;
+            } else if (strstart(str, "Test262:AsyncTestFailure", NULL)) {
+                async_done = 2; /* force an error */
+            }
             fputs(str, outfile);
             JS_FreeCString(ctx, str);
         }
@@ -727,23 +728,31 @@ static JSValue js_new_agent(JSContext *ctx)
 }
 #endif
 
-#ifdef CONFIG_REALM
 static JSValue js_createRealm(JSContext *ctx, JSValue this_val,
                               int argc, JSValue *argv)
 {
     JSContext *ctx1;
-    /* XXX: the context is not freed, need a refcount */
+    JSValue ret;
+    
     ctx1 = JS_NewContext(JS_GetRuntime(ctx));
     if (!ctx1)
         return JS_ThrowOutOfMemory(ctx);
-    return add_helpers1(ctx1);
+    ret = add_helpers1(ctx1);
+    /* ctx1 has a refcount so it stays alive */
+    JS_FreeContext(ctx1);
+    return ret;
 }
-#endif
+
+static JSValue js_IsHTMLDDA(JSContext *ctx, JSValue this_val,
+                            int argc, JSValue *argv)
+{
+    return JS_NULL;
+}
 
 static JSValue add_helpers1(JSContext *ctx)
 {
     JSValue global_obj;
-    JSValue obj262;
+    JSValue obj262, obj;
     
     global_obj = JS_GetGlobalObject(ctx);
 
@@ -767,12 +776,12 @@ static JSValue add_helpers1(JSContext *ctx)
 
     JS_SetPropertyStr(ctx, obj262, "global",
                       JS_DupValue(ctx, global_obj));
-
-#ifdef CONFIG_REALM
     JS_SetPropertyStr(ctx, obj262, "createRealm",
                       JS_NewCFunction(ctx, js_createRealm,
                                       "createRealm", 0));
-#endif
+    obj = JS_NewCFunction(ctx, js_IsHTMLDDA, "IsHTMLDDA", 0);
+    JS_SetIsHTMLDDA(ctx, obj);
+    JS_SetPropertyStr(ctx, obj262, "IsHTMLDDA", obj);
 
     JS_SetPropertyStr(ctx, global_obj, "$262", JS_DupValue(ctx, obj262));
     

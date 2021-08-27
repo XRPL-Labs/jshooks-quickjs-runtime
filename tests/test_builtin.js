@@ -17,6 +17,22 @@ function assert(actual, expected, message) {
                 (message ? " (" + message + ")" : ""));
 }
 
+function assert_throws(expected_error, func)
+{
+    var err = false;
+    try {
+        func();
+    } catch(e) {
+        err = true;
+        if (!(e instanceof expected_error)) {
+            throw Error("unexpected exception type");
+        }
+    }
+    if (!err) {
+        throw Error("expected exception");
+    }
+}
+
 // load more elaborate version of assert if available
 try { __loadScript("test_assert.js"); } catch(e) {}
 
@@ -39,7 +55,7 @@ function test_function()
     function constructor1(a) {
         this.x = a;
     }
-    
+
     var r, g;
     
     r = my_func.call(null, 1, 2);
@@ -48,6 +64,13 @@ function test_function()
     r = my_func.apply(null, [1, 2]);
     assert(r, 3, "apply");
 
+    r = (function () { return 1; }).apply(null, undefined);
+    assert(r, 1);
+
+    assert_throws(TypeError, (function() {
+        Reflect.apply((function () { return 1; }), null, undefined);
+    }));
+    
     r = new Function("a", "b", "return a + b;");
     assert(r(2,3), 5, "function");
     
@@ -277,6 +300,8 @@ function test_string()
     assert("aaaa".split("aaaaa", 1), [ "aaaa" ]);
 
     assert(eval('"\0"'), "\0");
+
+    assert("abc".padStart(Infinity, ""), "abc");
 }
 
 function test_math()
@@ -287,6 +312,10 @@ function test_math()
     assert(Math.ceil(a), 2);
     assert(Math.imul(0x12345678, 123), -1088058456);
     assert(Math.fround(0.1), 0.10000000149011612);
+    assert(Math.hypot() == 0);
+    assert(Math.hypot(-2) == 2);
+    assert(Math.hypot(3, 4) == 5);
+    assert(Math.abs(Math.hypot(3, 4, 5) - 7.0710678118654755) <= 1e-15);
 }
 
 function test_number()
@@ -370,7 +399,7 @@ function test_eval()
 
 function test_typed_array()
 {
-    var buffer, a, i;
+    var buffer, a, i, str;
 
     a = new Uint8Array(4);
     assert(a.length, 4);
@@ -409,8 +438,13 @@ function test_typed_array()
     a[0] = 1;
     
     a = new Uint8Array(buffer);
-    
-    assert(a.toString(), "0,0,255,255,0,0,0,0,0,0,128,63,255,255,255,255");
+
+    str = a.toString();
+    /* test little and big endian cases */
+    if (str !== "0,0,255,255,0,0,0,0,0,0,128,63,255,255,255,255" &&
+        str !== "0,0,255,255,0,0,0,0,63,128,0,0,255,255,255,255") {
+        assert(false);
+    }
 
     assert(a.buffer, buffer);
 
@@ -501,6 +535,10 @@ function test_regexp()
     a = eval("/\0a/");
     assert(a.toString(), "/\0a/");
     assert(a.exec("\0a")[0], "\0a");
+
+    assert(/{1a}/.toString(), "/{1a}/");
+    a = /a{1+/.exec("a{11");
+    assert(a, ["a{11"] );
 }
 
 function test_symbol()

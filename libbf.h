@@ -1,7 +1,7 @@
 /*
  * Tiny arbitrary precision floating point library
  * 
- * Copyright (c) 2017-2020 Fabrice Bellard
+ * Copyright (c) 2017-2021 Fabrice Bellard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if defined(__x86_64__)
+#if INTPTR_MAX >= INT64_MAX
 #define LIMB_LOG2_BITS 6
 #else
 #define LIMB_LOG2_BITS 5
@@ -376,6 +376,7 @@ char *bf_ftoa(size_t *plen, const bf_t *a, int radix, limb_t prec,
 #define BF_GET_INT_MOD (1 << 0) 
 int bf_get_int32(int *pres, const bf_t *a, int flags);
 int bf_get_int64(int64_t *pres, const bf_t *a, int flags);
+int bf_get_uint64(uint64_t *pres, const bf_t *a);
 
 /* the following functions are exported for testing only. */
 void mp_print_str(const char *str, const limb_t *tab, limb_t n);
