@@ -42,10 +42,12 @@
 #include <conio.h>
 #include <utime.h>
 #else
+#if !defined(__wasi__)
 #include <dlfcn.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 #include <sys/wait.h>
+#endif
+#include <sys/ioctl.h>
 
 #if defined(__APPLE__)
 typedef sig_t sighandler_t;
@@ -453,7 +455,7 @@ typedef JSModuleDef *(JSInitModuleFunc)(JSContext *ctx,
                                         const char *module_name);
 
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__wasi__)
 static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                         const char *module_name)
 {
@@ -1743,6 +1745,7 @@ static JSValue js_os_ttySetRaw(JSContext *ctx, JSValueConst this_val,
 static JSValue js_os_ttyGetWinSize(JSContext *ctx, JSValueConst this_val,
                                    int argc, JSValueConst *argv)
 {
+#ifndef __wasi__
     int fd;
     struct winsize ws;
     JSValue obj;
@@ -1760,19 +1763,27 @@ static JSValue js_os_ttyGetWinSize(JSContext *ctx, JSValueConst this_val,
     } else {
         return JS_NULL;
     }
+#else
+    return JS_NULL;
+#endif
 }
 
+#ifndef __wasi__
 static struct termios oldtty;
+#endif
 
 static void term_exit(void)
 {
+#ifndef __wasi__
     tcsetattr(0, TCSANOW, &oldtty);
+#endif
 }
 
 /* XXX: should add a way to go back to normal mode */
 static JSValue js_os_ttySetRaw(JSContext *ctx, JSValueConst this_val,
                                int argc, JSValueConst *argv)
 {
+#ifndef __wasi__
     struct termios tty;
     int fd;
     
@@ -1795,6 +1806,7 @@ static JSValue js_os_ttySetRaw(JSContext *ctx, JSValueConst this_val,
     tcsetattr(fd, TCSANOW, &tty);
 
     atexit(term_exit);
+#endif
     return JS_UNDEFINED;
 }
 

@@ -13,8 +13,8 @@ void JS_FreeValueRT_real(JSRuntime *rt, JSValue v) {
     return JS_FreeValueRT(rt, v);
 }
 
-void JS_DupValue_real(JSContext *ctx, JSValue v) {
-    JS_DupValue(ctx, v);
+JSValue JS_DupValue_real(JSContext *ctx, JSValue v) {
+    return JS_DupValue(ctx, v);
 }
 
 JSValue JS_DupValueRT_real(JSRuntime *rt, JSValueConst v) {
@@ -27,6 +27,10 @@ JSValue JS_NewFloat64_real(JSContext *ctx, double d) {
 
 JSValue JS_NewInt32_real(JSContext *ctx, int32_t val) {
     return JS_NewInt32(ctx, val);
+}
+
+JSValue JS_NewInt64_real(JSContext *ctx, int64_t val) {
+    return JS_NewInt64(ctx, val);
 }
 
 JSValue JS_NewBool_real(JSContext *ctx, JS_BOOL val) {
@@ -109,6 +113,20 @@ JSValue JS_NewCFunctionMagic_real(JSContext *ctx, JSCFunctionMagic *func, const 
     return JS_NewCFunctionMagic(ctx, func, name, length, cproto, magic);
 }
 
+JSValue JS_GetPromiseResult_real(JSContext *ctx, JSValueConst this_val) {
+    return JS_GetPromiseResult(ctx, this_val);
+}
+
+int JS_IsPromise(JSContext *ctx, JSValueConst val) {
+    JSObject *p;
+    if (JS_VALUE_GET_TAG(val) == JS_TAG_OBJECT) {
+        p = JS_VALUE_GET_OBJ(val);
+        return p->class_id == JS_CLASS_PROMISE;
+    } else {
+        return FALSE;
+    }
+}
+
 int js_eval_buf(JSContext *ctx, const void *buf, int buf_len, const char *filename, int eval_flags)
 {
     JSValue val;
@@ -142,4 +160,8 @@ JSValue js_undefined(){
 
 JSValue js_exception(){
     return JS_EXCEPTION;
+}
+
+JSValue js_null(){
+    return JS_NULL;
 }
