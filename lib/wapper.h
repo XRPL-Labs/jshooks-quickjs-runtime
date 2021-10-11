@@ -26,13 +26,14 @@ void JS_FreeValue_real(JSContext *ctx, JSValue v);
 
 void JS_FreeValueRT_real(JSRuntime *rt, JSValue v);
 
-void JS_DupValue_real(JSContext *ctx, JSValue v);
+JSValue JS_DupValue_real(JSContext *ctx, JSValue v);
 
 JSValue JS_DupValueRT_real(JSRuntime *rt, JSValueConst v);
 
 JSValue JS_NewFloat64_real(JSContext *ctx, double d);
 
 JSValue JS_NewInt32_real(JSContext *ctx, int32_t val);
+JSValue JS_NewInt64_real(JSContext *ctx, int64_t val);
 
 JSValue JS_NewBool_real(JSContext *ctx, JS_BOOL val);
 
@@ -66,6 +67,10 @@ JS_BOOL JS_IsSymbol_real(JSValueConst v);
 
 JS_BOOL JS_IsObject_real(JSValueConst v);
 
+int JS_IsPromise(JSContext *ctx, JSValueConst val);
+
+JSValue JS_GetPromiseResult_real(JSContext *ctx, JSValueConst this_val);
+
 int JS_ToUint32_real(JSContext *ctx, uint32_t *pres, JSValueConst val);
 
 int JS_SetProperty_real(JSContext *ctx, JSValueConst this_obj, JSAtom prop, JSValue val);
@@ -81,3 +86,5 @@ void *memcpy(void *str1, const void *str2, size_t n);
 JSValue js_undefined();
 
 JSValue js_exception();
+
+JSValue js_null();

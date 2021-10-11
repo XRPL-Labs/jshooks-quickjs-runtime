@@ -28313,7 +28313,7 @@ static JSValue js_evaluate_module(JSContext *ctx, JSModuleDef *m)
     }
 
     m->eval_mark = TRUE;
-
+    
     for(i = 0; i < m->req_module_entries_count; i++) {
         JSReqModuleEntry *rme = &m->req_module_entries[i];
         m1 = rme->module;
@@ -47112,6 +47112,15 @@ static __exception int perform_promise_then(JSContext *ctx,
     return 0;
 }
 
+JSValue JS_GetPromiseResult(JSContext *ctx, JSValueConst this_val){
+    JSPromiseData *s;
+    s = JS_GetOpaque2(ctx, this_val, JS_CLASS_PROMISE);
+    if (!s)
+        return JS_EXCEPTION;
+
+    return JS_DupValue(ctx, s->promise_result);
+}
+
 static JSValue js_promise_then(JSContext *ctx, JSValueConst this_val,
                                int argc, JSValueConst *argv)
 {
@@ -51306,6 +51315,18 @@ void JS_DetachArrayBuffer(JSContext *ctx, JSValueConst obj)
         }
     }
 }
+
+int JS_IsArrayBuffer(JSContext *ctx,JSValueConst obj){
+    JSObject *p;
+    if (JS_VALUE_GET_TAG(obj) != JS_TAG_OBJECT)
+        return FALSE;
+    p = JS_VALUE_GET_OBJ(obj);
+    if (p->class_id != JS_CLASS_ARRAY_BUFFER &&
+        p->class_id != JS_CLASS_SHARED_ARRAY_BUFFER) {
+            return FALSE;
+    }
+    return TRUE;
+} 
 
 /* get an ArrayBuffer or SharedArrayBuffer */
 static JSArrayBuffer *js_get_array_buffer(JSContext *ctx, JSValueConst obj)

@@ -108,6 +108,7 @@ DEFINES+=-D__USE_MINGW_ANSI_STDIO # for standard snprintf behavior
 endif
 
 DEFINES+=-D__wasi__
+DEFINES+=-D__native__
 
 CFLAGS+=$(DEFINES)
 CFLAGS_DEBUG=$(CFLAGS) -O0
