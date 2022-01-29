@@ -3726,7 +3726,9 @@ static const JSCFunctionListEntry js_os_funcs[] = {
 
 static int js_os_init(JSContext *ctx, JSModuleDef *m)
 {
+#ifndef NO_OS_POLL
     os_poll_func = js_os_poll;
+#endif
     
     /* OSTimer class */
     JS_NewClassID(&js_os_timer_class_id);
