@@ -154,6 +154,49 @@ int js_eval_buf(JSContext *ctx, const void *buf, int buf_len, const char *filena
     return ret;
 }
 
+
+JSValue js_require(JSContext *ctx, JSValueConst specifier){
+    JSAtom atom_basename;
+    JSValue basename_val;
+    JSModuleDef *m;
+    JSValue ret, err, ns;
+    const char *basename = NULL, *filename;
+
+    atom_basename = JS_GetScriptOrModuleName(ctx, 0);
+    if (atom_basename == JS_ATOM_NULL)
+        basename_val = JS_NULL;
+    else
+        basename_val = JS_AtomToValue(ctx, atom_basename);
+    JS_FreeAtom(ctx, atom_basename);
+    if (JS_IsException(basename_val))
+        return basename_val;
+
+    basename = JS_ToCString(ctx, basename_val);
+    filename = JS_ToCString(ctx, specifier);
+    JS_FreeValue(ctx, basename_val);
+
+    if (!basename || !filename)
+        goto exception;
+                     
+    m = JS_RunModule(ctx, basename, filename);
+    if (!m)
+        goto exception;
+
+    /* return the module namespace */
+    ns = js_get_module_ns(ctx, m);
+    if (JS_IsException(ns))
+        goto exception;
+
+    JS_FreeCString(ctx, filename);
+    JS_FreeCString(ctx, basename);
+    return ns;
+exception:
+    err = JS_GetException(ctx);
+    JS_FreeCString(ctx, filename);
+    JS_FreeCString(ctx, basename);
+    return err;
+}
+
 JSValue js_undefined(){
     return JS_UNDEFINED;
 }
