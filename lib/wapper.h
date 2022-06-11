@@ -43,6 +43,8 @@ double JS_VALUE_GET_FLOAT64_real(JSValue v);
 
 int JS_VALUE_GET_NORM_TAG_real(JSValue v);
 
+void *JS_VALUE_GET_PTR_real(JSValue v);
+
 JS_BOOL JS_IsNumber_real(JSValueConst v);
 
 JS_BOOL JS_IsBigInt_real(JSContext *ctx, JSValueConst v);
