@@ -49,6 +49,10 @@ int JS_VALUE_GET_NORM_TAG_real(JSValue v) {
     return JS_VALUE_GET_NORM_TAG(v);
 }
 
+void *JS_VALUE_GET_PTR_real(JSValue v) {
+    return JS_VALUE_GET_PTR(v);
+}
+
 JS_BOOL JS_IsNumber_real(JSValueConst v) {
     return JS_IsNumber(v);
 }
