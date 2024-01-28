@@ -2861,6 +2861,7 @@ static char **build_envp(JSContext *ctx, JSValueConst obj)
     goto done;
 }
 
+#if !defined(__wasi__)
 /* execvpe is not available on non GNU systems */
 static int my_execvpe(const char *filename, char **argv, char **envp)
 {
@@ -2916,6 +2917,8 @@ static int my_execvpe(const char *filename, char **argv, char **envp)
         errno = EACCES;
     return -1;
 }
+
+#endif
 
 /* exec(args[, options]) -> exitcode */
 static JSValue js_os_exec(JSContext *ctx, JSValueConst this_val,
@@ -3114,16 +3117,18 @@ static JSValue js_os_exec(JSContext *ctx, JSValueConst this_val,
  exception:
     ret_val = JS_EXCEPTION;
     goto done;
-#endif
+#endif // !__wasi__
     return JS_EXCEPTION;
 }
 
 /* getpid() -> pid */
+#if !defined(__wasi__)
 static JSValue js_os_getpid(JSContext *ctx, JSValueConst this_val,
                             int argc, JSValueConst *argv)
 {
     return JS_NewInt32(ctx, getpid());
 }
+#endif
 
 /* waitpid(pid, block) -> [pid, status] */
 static JSValue js_os_waitpid(JSContext *ctx, JSValueConst this_val,
@@ -3197,6 +3202,7 @@ static JSValue js_os_kill(JSContext *ctx, JSValueConst this_val,
 }
 
 /* dup(fd) */
+#if !defined(__wasi__)
 static JSValue js_os_dup(JSContext *ctx, JSValueConst this_val,
                          int argc, JSValueConst *argv)
 {
@@ -3207,7 +3213,9 @@ static JSValue js_os_dup(JSContext *ctx, JSValueConst this_val,
     ret = js_get_errno(dup(fd));
     return JS_NewInt32(ctx, ret);
 }
+#endif
 
+#if !defined(__wasi__)
 /* dup2(fd) */
 static JSValue js_os_dup2(JSContext *ctx, JSValueConst this_val,
                          int argc, JSValueConst *argv)
@@ -3221,6 +3229,7 @@ static JSValue js_os_dup2(JSContext *ctx, JSValueConst this_val,
     ret = js_get_errno(dup2(fd, fd2));
     return JS_NewInt32(ctx, ret);
 }
+#endif
 
 #endif /* !_WIN32 */
 
@@ -3764,7 +3773,8 @@ static const JSCFunctionListEntry js_os_funcs[] = {
 #if !defined(_WIN32)
     JS_CFUNC_MAGIC_DEF("lstat", 1, js_os_stat, 1 ),
     JS_CFUNC_DEF("symlink", 2, js_os_symlink ),
-    // JS_CFUNC_DEF("readlink", 1, js_os_readlink ),
+    JS_CFUNC_DEF("readlink", 1, js_os_readlink ),
+    #if !defined(__wasi__)
     JS_CFUNC_DEF("exec", 1, js_os_exec ),
     JS_CFUNC_DEF("getpid", 0, js_os_getpid ),
     JS_CFUNC_DEF("waitpid", 2, js_os_waitpid ),
@@ -3773,6 +3783,7 @@ static const JSCFunctionListEntry js_os_funcs[] = {
     JS_CFUNC_DEF("kill", 2, js_os_kill ),
     JS_CFUNC_DEF("dup", 1, js_os_dup ),
     JS_CFUNC_DEF("dup2", 2, js_os_dup2 ),
+    #endif
 #endif
 };
 

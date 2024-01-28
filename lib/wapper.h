@@ -85,8 +85,6 @@ int js_eval_buf(JSContext *ctx, const void *buf, int buf_len, const char *filena
 
 void *memcpy(void *str1, const void *str2, size_t n);
 
-JSValue js_require(JSContext *ctx, JSValueConst specifier);
-
 JSValue js_undefined();
 
 JSValue js_exception();

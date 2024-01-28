@@ -6227,8 +6227,11 @@ void JS_ComputeMemoryUsage(JSRuntime *rt, JSMemoryUsage *s)
         s->obj_size + s->prop_size + s->shape_size +
         s->js_func_size + s->js_func_code_size + s->js_func_pc2line_size;
 }
-
+#if defined(__wasi__)
+void JS_DumpMemoryUsage(int *fp, const JSMemoryUsage *s, JSRuntime *rt)
+#else
 void JS_DumpMemoryUsage(FILE *fp, const JSMemoryUsage *s, JSRuntime *rt)
+#endif
 {
     fprintf(fp, "QuickJS memory usage -- "
 #ifdef CONFIG_BIGNUM

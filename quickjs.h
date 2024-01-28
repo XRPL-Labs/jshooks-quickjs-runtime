@@ -64,7 +64,7 @@ typedef uint32_t JSAtom;
 #define JS_NAN_BOXING
 #endif
 
-enum {
+enum JS_TAG{
     /* all tags with a reference count are negative */
     JS_TAG_FIRST       = -11, /* first negative tag */
     JS_TAG_BIG_DECIMAL = -11,
@@ -416,8 +416,11 @@ typedef struct JSMemoryUsage {
 } JSMemoryUsage;
 
 void JS_ComputeMemoryUsage(JSRuntime *rt, JSMemoryUsage *s);
+#if defined(__wasi__)
+void JS_DumpMemoryUsage(int *fp, const JSMemoryUsage *s, JSRuntime *rt);
+#else
 void JS_DumpMemoryUsage(FILE *fp, const JSMemoryUsage *s, JSRuntime *rt);
-
+#endif
 /* atom support */
 #define JS_ATOM_NULL 0
 
