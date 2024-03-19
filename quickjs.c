@@ -6247,7 +6247,7 @@ void JS_DumpMemoryUsage(FILE *fp, const JSMemoryUsage *s, JSRuntime *rt)
 #ifdef CONFIG_BIGNUM
             "BigNum "
 #endif
-            CONFIG_VERSION " version, %d-bit, malloc limit: %"PRId64"\n\n",
+            " %d-bit, malloc limit: %"PRId64"\n\n",
             (int)sizeof(void *) * 8, s->malloc_limit);
 #if 1
     if (rt) {
@@ -20700,6 +20700,7 @@ static __exception int next_token(JSParseState *s)
     s->token.line_num = s->line_num;
     s->token.ptr = p;
     c = *p;
+
     switch(c) {
     case 0:
         if (p >= s->buf_end) {
@@ -21164,7 +21165,24 @@ static __exception int next_token(JSParseState *s)
     }
     s->buf_ptr = p;
 
-    //    dump_token(s, &s->token);
+    //dump_token(s, &s->token);
+    //printf("tokid: %d\n", s->token.val);
+    
+    if (s->token.val == TOK_AWAIT || s->token.val == TOK_YIELD)
+        return -1;
+
+    if (s->token.val == TOK_IDENT)
+    {
+        char buf[ATOM_GET_STR_BUF_SIZE];
+        JS_AtomGetStr(s->ctx, buf, sizeof(buf), s->token.u.ident.atom);
+        const char* tok = JS_AtomGetStr(s->ctx, buf, sizeof(buf), s->token.u.ident.atom);
+
+#define ILLEGAL(x) if (memcmp(tok, x, sizeof(x)) == 0) return -1;
+
+        ILLEGAL("async");
+        ILLEGAL("Promise");
+    }
+
     return 0;
 
  fail:
