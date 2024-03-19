@@ -22,7 +22,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#define CONFIG_VERSION "1-2-3"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

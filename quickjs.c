@@ -18561,21 +18561,13 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValueConst func_obj,
             BREAK;
 
         CASE(OP_await):
-            ret_val = JS_NewInt32(ctx, FUNC_RET_AWAIT);
-            goto done_generator;
         CASE(OP_yield):
-            ret_val = JS_NewInt32(ctx, FUNC_RET_YIELD);
-            goto done_generator;
         CASE(OP_yield_star):
         CASE(OP_async_yield_star):
-            ret_val = JS_NewInt32(ctx, FUNC_RET_YIELD_STAR);
-            goto done_generator;
         CASE(OP_return_async):
-            ret_val = JS_UNDEFINED;
-            goto done_generator;
         CASE(OP_initial_yield):
-            ret_val = JS_NewInt32(ctx, FUNC_RET_INITIAL_YIELD);
-            goto done_generator;
+            JS_ThrowTypeError(ctx, "forbidden operation (async/yield)");
+            goto exception;
 
         CASE(OP_nop):
             BREAK;
