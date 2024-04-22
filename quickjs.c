@@ -1,3 +1,5 @@
+#define DUMP_READ_OBJECT
+#define DUMP_BYTECODE 1
 /*
  * QuickJS Javascript Engine
  *
@@ -16148,7 +16150,9 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValueConst func_obj,
     size_t alloca_size;
 
 #if !DIRECT_DISPATCH
-#define SWITCH(pc)      switch (opcode = *pc++)
+#define SWITCH(pc)      \
+        printf("opcode: 0x%02X\n", *pc); \
+        switch (opcode = *pc++)
 #define CASE(op)        case op
 #define DEFAULT         default
 #define BREAK           break
@@ -16163,7 +16167,9 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValueConst func_obj,
 #include "quickjs-opcode.h"
         [ OP_COUNT ... 255 ] = &&case_default
     };
-#define SWITCH(pc)      goto *dispatch_table[opcode = *pc++];
+#define SWITCH(pc)      \
+    printf("opcode: 0x%02X\n", *pc); \
+    goto *dispatch_table[opcode = *pc++];
 #define CASE(op)        case_ ## op
 #define DEFAULT         case_default
 #define BREAK           SWITCH(pc)
@@ -16256,6 +16262,7 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValueConst func_obj,
     for(;;) {
         int call_argc;
         JSValue *call_argv;
+
 
         SWITCH(pc) {
         CASE(OP_push_i32):
@@ -16745,66 +16752,70 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValueConst func_obj,
             goto exception;
 
         CASE(OP_eval):
-            {
-                JSValueConst obj;
-                int scope_idx;
-                call_argc = get_u16(pc);
-                scope_idx = get_u16(pc + 2) - 1;
-                pc += 4;
-                call_argv = sp - call_argc;
-                sf->cur_pc = pc;
-                if (js_same_value(ctx, call_argv[-1], ctx->eval_obj)) {
-                    if (call_argc >= 1)
-                        obj = call_argv[0];
-                    else
-                        obj = JS_UNDEFINED;
-                    ret_val = JS_EvalObject(ctx, JS_UNDEFINED, obj,
-                                            JS_EVAL_TYPE_DIRECT, scope_idx);
-                } else {
-                    ret_val = JS_CallInternal(ctx, call_argv[-1], JS_UNDEFINED,
-                                              JS_UNDEFINED, call_argc, call_argv, 0);
-                }
-                if (unlikely(JS_IsException(ret_val)))
-                    goto exception;
-                for(i = -1; i < call_argc; i++)
-                    JS_FreeValue(ctx, call_argv[i]);
-                sp -= call_argc + 1;
-                *sp++ = ret_val;
-            }
-            BREAK;
-            /* could merge with OP_apply */
         CASE(OP_apply_eval):
-            {
-                int scope_idx;
-                uint32_t len;
-                JSValue *tab;
-                JSValueConst obj;
-
-                scope_idx = get_u16(pc) - 1;
-                pc += 2;
-                tab = build_arg_list(ctx, &len, sp[-1]);
-                if (!tab)
-                    goto exception;
-                if (js_same_value(ctx, sp[-2], ctx->eval_obj)) {
-                    if (len >= 1)
-                        obj = tab[0];
-                    else
-                        obj = JS_UNDEFINED;
-                    ret_val = JS_EvalObject(ctx, JS_UNDEFINED, obj,
-                                            JS_EVAL_TYPE_DIRECT, scope_idx);
-                } else {
-                    ret_val = JS_Call(ctx, sp[-2], JS_UNDEFINED, len,
-                                      (JSValueConst *)tab);
-                }
-                free_arg_list(ctx, tab, len);
-                if (unlikely(JS_IsException(ret_val)))
-                    goto exception;
-                JS_FreeValue(ctx, sp[-2]);
-                JS_FreeValue(ctx, sp[-1]);
-                sp -= 2;
-                *sp++ = ret_val;
-            }
-            BREAK;
+            JS_ThrowTypeError(ctx, "forbidden operation (async/yield)");
+            goto exception;
+//        CASE(OP_eval):
+//            {
+//                JSValueConst obj;
+//                int scope_idx;
+//                call_argc = get_u16(pc);
+//                scope_idx = get_u16(pc + 2) - 1;
+//                pc += 4;
+//                call_argv = sp - call_argc;
+//                sf->cur_pc = pc;
+//                if (js_same_value(ctx, call_argv[-1], ctx->eval_obj)) {
+//                    if (call_argc >= 1)
+//                        obj = call_argv[0];
+//                    else
+//                        obj = JS_UNDEFINED;
+//                    ret_val = JS_EvalObject(ctx, JS_UNDEFINED, obj,
+//                                            JS_EVAL_TYPE_DIRECT, scope_idx);
+//                } else {
+//                    ret_val = JS_CallInternal(ctx, call_argv[-1], JS_UNDEFINED,
+//                                              JS_UNDEFINED, call_argc, call_argv, 0);
+//                }
+//                if (unlikely(JS_IsException(ret_val)))
+//                    goto exception;
+//                for(i = -1; i < call_argc; i++)
+//                    JS_FreeValue(ctx, call_argv[i]);
+//                sp -= call_argc + 1;
+//                *sp++ = ret_val;
+//            }
+//            BREAK;
+//            /* could merge with OP_apply */
+//        CASE(OP_apply_eval):
+//            {
+//                int scope_idx;
+//                uint32_t len;
+//                JSValue *tab;
+//                JSValueConst obj;
+//
+//                scope_idx = get_u16(pc) - 1;
+//                pc += 2;
+//                tab = build_arg_list(ctx, &len, sp[-1]);
+//                if (!tab)
+//                    goto exception;
+//                if (js_same_value(ctx, sp[-2], ctx->eval_obj)) {
+//                    if (len >= 1)
+//                        obj = tab[0];
+//                    else
+//                        obj = JS_UNDEFINED;
+//                    ret_val = JS_EvalObject(ctx, JS_UNDEFINED, obj,
+//                                            JS_EVAL_TYPE_DIRECT, scope_idx);
+//                } else {
+//                    ret_val = JS_Call(ctx, sp[-2], JS_UNDEFINED, len,
+//                                      (JSValueConst *)tab);
+//                }
+//                free_arg_list(ctx, tab, len);
+//                if (unlikely(JS_IsException(ret_val)))
+//                    goto exception;
+//                JS_FreeValue(ctx, sp[-2]);
+//                JS_FreeValue(ctx, sp[-1]);
+//                sp -= 2;
+//                *sp++ = ret_val;
+//            }
+//            BREAK;
 
         CASE(OP_regexp):
             {
@@ -21173,6 +21184,8 @@ static __exception int next_token(JSParseState *s)
 
         ILLEGAL("async");
         ILLEGAL("Promise");
+        ILLEGAL("eval");
+        ILLEGAL("Function");
     }
 
     return 0;
@@ -52699,12 +52712,14 @@ void JS_AddIntrinsicBaseObjects(JSContext *ctx)
                                js_object_proto_funcs, countof(js_object_proto_funcs));
 
     /* Function */
+    /*
     JS_SetPropertyFunctionList(ctx, ctx->function_proto, js_function_proto_funcs, countof(js_function_proto_funcs));
     ctx->function_ctor = JS_NewCFunctionMagic(ctx, js_function_constructor,
                                               "Function", 1, JS_CFUNC_constructor_or_func_magic,
                                               JS_FUNC_NORMAL);
     JS_NewGlobalCConstructor2(ctx, JS_DupValue(ctx, ctx->function_ctor), "Function",
                               ctx->function_proto);
+    */
 
     /* Error */
     obj1 = JS_NewCFunctionMagic(ctx, js_error_constructor,

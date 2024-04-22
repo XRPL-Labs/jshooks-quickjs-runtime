@@ -186,7 +186,7 @@ CONFIG_SHARED_LIBS=y # building shared libraries is supported
 endif
 endif
 
-PROGS=qjs$(EXE) qjsc$(EXE) run-test262
+PROGS=qjs$(EXE) qjsc$(EXE)
 ifneq ($(CROSS_PREFIX),)
 QJSC_CC=gcc
 QJSC=./host-qjsc
@@ -325,7 +325,6 @@ clean:
 	rm -f hello.c test_fib.c
 	rm -f examples/*.so tests/*.so
 	rm -rf $(OBJDIR)/ *.dSYM/ qjs-debug
-	rm -rf run-test262-debug run-test262-32
 	rm -f run_octane run_sunspider_like
 
 install: all
@@ -454,55 +453,6 @@ microbench: qjs
 
 microbench-32: qjs32
 	./qjs32 --std tests/microbench.js
-
-ifeq ($(wildcard test262o/tests.txt),)
-test2o test2o-32 test2o-update:
-	@echo test262o tests not installed
-else
-# ES5 tests (obsolete)
-test2o: run-test262
-	time ./run-test262 -t -m -c test262o.conf
-
-test2o-32: run-test262-32
-	time ./run-test262-32 -t -m -c test262o.conf
-
-test2o-update: run-test262
-	./run-test262 -t -u -c test262o.conf
-endif
-
-ifeq ($(wildcard test262o/tests.txt),)
-test2 test2-32 test2-update test2-default test2-check:
-	@echo test262 tests not installed
-else
-# Test262 tests
-test2-default: run-test262
-	time ./run-test262 -t -m -c test262.conf
-
-test2: run-test262
-	time ./run-test262 -t -m -c test262.conf -a
-
-test2-32: run-test262-32
-	time ./run-test262-32 -t -m -c test262.conf -a
-
-test2-update: run-test262
-	./run-test262 -t -u -c test262.conf -a
-
-test2-check: run-test262
-	time ./run-test262 -t -m -c test262.conf -E -a
-endif
-
-testall: all test microbench test2o test2
-
-testall-32: all test-32 microbench-32 test2o-32 test2-32
-
-testall-complete: testall testall-32
-
-node-test:
-	node tests/test_closure.js
-	node tests/test_language.js
-	node tests/test_builtin.js
-	node tests/test_loop.js
-	node tests/test_bignum.js
 
 node-microbench:
 	node tests/microbench.js -s microbench-node.txt

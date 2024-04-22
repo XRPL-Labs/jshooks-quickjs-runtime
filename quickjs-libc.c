@@ -4001,6 +4001,23 @@ JSValue js_std_await(JSContext *ctx, JSValue obj)
     return ret;
 }
 
+int js_std_eval_binary_bare(JSContext *ctx, const uint8_t *buf, size_t buf_len)
+{
+    JSValue obj, val;
+    obj = JS_ReadObject(ctx, buf, buf_len, JS_READ_OBJ_BYTECODE);
+    if (JS_IsException(obj))
+        goto exception;
+    val = JS_EvalFunction(ctx, obj);
+    if (JS_IsException(val)) {
+exception:
+        js_std_dump_error(ctx);
+        return 0;
+    }
+    
+    JS_FreeValue(ctx, val);
+
+    return 1;
+}
 void js_std_eval_binary(JSContext *ctx, const uint8_t *buf, size_t buf_len,
                         int load_only)
 {
