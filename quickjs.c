@@ -1,5 +1,5 @@
-#define DUMP_READ_OBJECT
-#define DUMP_BYTECODE 1
+//#define DUMP_READ_OBJECT
+//#define DUMP_BYTECODE 1
 /*
  * QuickJS Javascript Engine
  *
