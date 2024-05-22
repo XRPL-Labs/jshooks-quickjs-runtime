@@ -1,6 +1,6 @@
 /*
  * QuickJS C library
- * 
+ *
  * Copyright (c) 2017-2018 Fabrice Bellard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -46,13 +46,15 @@ int js_module_set_import_meta(JSContext *ctx, JSValueConst func_val,
                               JS_BOOL use_realpath, JS_BOOL is_main);
 JSModuleDef *js_module_loader(JSContext *ctx,
                               const char *module_name, void *opaque);
+
+int js_std_eval_binary_bare(JSContext *ctx, const uint8_t *buf, size_t buf_len);
 void js_std_eval_binary(JSContext *ctx, const uint8_t *buf, size_t buf_len,
                         int flags);
 void js_std_promise_rejection_tracker(JSContext *ctx, JSValueConst promise,
                                       JSValueConst reason,
                                       JS_BOOL is_handled, void *opaque);
 void js_std_set_worker_new_context_func(JSContext *(*func)(JSRuntime *rt));
-                                        
+
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif

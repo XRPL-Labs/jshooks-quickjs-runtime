@@ -1,6 +1,6 @@
 /*
  * QuickJS stand alone interpreter
- * 
+ *
  * Copyright (c) 2017-2021 Fabrice Bellard
  * Copyright (c) 2017-2021 Charlie Gordon
  *
@@ -36,16 +36,14 @@
 #include <malloc/malloc.h>
 #elif defined(__linux__)
 #include <malloc.h>
+#elif defined(__FreeBSD__)
+#include <malloc_np.h>
 #endif
 
 #include "cutils.h"
 #include "quickjs-libc.h"
 
-extern const uint8_t qjsc_repl[];
-extern const uint32_t qjsc_repl_size;
 #ifdef CONFIG_BIGNUM
-extern const uint8_t qjsc_qjscalc[];
-extern const uint32_t qjsc_qjscalc_size;
 static int bignum_ext;
 #endif
 
@@ -83,7 +81,7 @@ static int eval_file(JSContext *ctx, const char *filename, int module)
     uint8_t *buf;
     int ret, eval_flags;
     size_t buf_len;
-    
+
     buf = js_load_file(ctx, &buf_len, filename);
     if (!buf) {
         perror(filename);
@@ -274,7 +272,7 @@ static const JSMallocFunctions trace_mf = {
 
 void help(void)
 {
-    printf("QuickJS version " CONFIG_VERSION "\n"
+    printf("QuickJS lite\n"
            "usage: " PROG_NAME " [options] [file [args]]\n"
            "-h  --help         list options\n"
            "-e  --eval EXPR    evaluate EXPR\n"
@@ -317,7 +315,7 @@ int main(int argc, char **argv)
     int load_jscalc;
 #endif
     size_t stack_size = 0;
-    
+
 #ifdef CONFIG_BIGNUM
     /* load jscalc runtime if invoked as 'qjscalc' */
     {
@@ -329,7 +327,7 @@ int main(int argc, char **argv)
         load_jscalc = !strcmp(exename, "qjscalc");
     }
 #endif
-    
+
     /* cannot use getopt because we want to pass the command line to
        the script */
     optind = 1;
@@ -480,13 +478,8 @@ int main(int argc, char **argv)
         JS_SetHostPromiseRejectionTracker(rt, js_std_promise_rejection_tracker,
                                           NULL);
     }
-    
+
     if (!empty_run) {
-#ifdef CONFIG_BIGNUM
-        if (load_jscalc) {
-            js_std_eval_binary(ctx, qjsc_qjscalc, qjsc_qjscalc_size, 0);
-        }
-#endif
         js_std_add_helpers(ctx, argc - optind, argv + optind);
 
         /* make 'std' and 'os' visible to non module code */
@@ -516,12 +509,9 @@ int main(int argc, char **argv)
             if (eval_file(ctx, filename, module))
                 goto fail;
         }
-        if (interactive) {
-            js_std_eval_binary(ctx, qjsc_repl, qjsc_repl_size, 0);
-        }
         js_std_loop(ctx);
     }
-    
+
     if (dump_memory) {
         JSMemoryUsage stats;
         JS_ComputeMemoryUsage(rt, &stats);

@@ -1,19 +1,51 @@
 "use strict";
 
+var status = 0;
+var throw_errors = true;
+
+function throw_error(msg) {
+    if (throw_errors)
+        throw Error(msg);
+    console.log(msg);
+    status = 1;
+}
+
 function assert(actual, expected, message) {
+    function get_full_type(o) {
+        var type = typeof(o);
+        if (type === 'object') {
+            if (o === null)
+                return 'null';
+            if (o.constructor && o.constructor.name)
+                return o.constructor.name;
+        }
+        return type;
+    }
+
     if (arguments.length == 1)
         expected = true;
 
-    if (actual === expected)
-        return;
-
-    if (actual !== null && expected !== null
-    &&  typeof actual == 'object' && typeof expected == 'object'
-    &&  actual.toString() === expected.toString())
-        return;
-
-    throw Error("assertion failed: got |" + actual + "|" +
-                ", expected |" + expected + "|" +
+    if (typeof actual === typeof expected) {
+        if (actual === expected) {
+            if (actual !== 0 || (1 / actual) === (1 / expected))
+                return;
+        }
+        if (typeof actual === 'number') {
+            if (isNaN(actual) && isNaN(expected))
+                return true;
+        }
+        if (typeof actual === 'object') {
+            if (actual !== null && expected !== null
+            &&  actual.constructor === expected.constructor
+            &&  actual.toString() === expected.toString())
+                return;
+        }
+    }
+    // Should output the source file and line number and extract
+    //   the expression from the assert call
+    throw_error("assertion failed: got " +
+                get_full_type(actual) + ":|" + actual + "|, expected " +
+                get_full_type(expected) + ":|" + expected + "|" +
                 (message ? " (" + message + ")" : ""));
 }
 
@@ -25,11 +57,16 @@ function assert_throws(expected_error, func)
     } catch(e) {
         err = true;
         if (!(e instanceof expected_error)) {
-            throw Error("unexpected exception type");
+            // Should output the source file and line number and extract
+            //   the expression from the assert_throws() call
+            throw_error("unexpected exception type");
+            return;
         }
     }
     if (!err) {
-        throw Error("expected exception");
+        // Should output the source file and line number and extract
+        //   the expression from the assert_throws() call
+        throw_error("expected exception");
     }
 }
 
@@ -57,7 +94,7 @@ function test_function()
     }
 
     var r, g;
-    
+
     r = my_func.call(null, 1, 2);
     assert(r, 3, "call");
 
@@ -70,10 +107,10 @@ function test_function()
     assert_throws(TypeError, (function() {
         Reflect.apply((function () { return 1; }), null, undefined);
     }));
-    
+
     r = new Function("a", "b", "return a + b;");
     assert(r(2,3), 5, "function");
-    
+
     g = f.bind(1, 2);
     assert(g.length, 1);
     assert(g.name, "bound f");
@@ -103,7 +140,7 @@ function test()
     assert(a.z, 4, "get");
     a.z = 5;
     assert(a.z_val, 5, "set");
-    
+
     a = { get z() { return 4; }, set z(val) { this.z_val = val; } };
     assert(a.z, 4, "get");
     a.z = 5;
@@ -207,7 +244,7 @@ function test_string()
     assert(a.charAt(1), "b");
     assert(a.charAt(-1), "");
     assert(a.charAt(3), "");
-    
+
     a = "abcd";
     assert(a.substring(1, 3), "bc", "substring");
     a = String.fromCharCode(0x20ac);
@@ -216,7 +253,7 @@ function test_string()
     assert(a, "\u20ac", "unicode");
     assert(a, "\u{20ac}", "unicode");
     assert("a", "\x61", "unicode");
-        
+
     a = "\u{10ffff}";
     assert(a.length, 2, "unicode");
     assert(a, "\u{dbff}\u{dfff}", "unicode");
@@ -311,10 +348,14 @@ function test_math()
     assert(Math.floor(a), 1);
     assert(Math.ceil(a), 2);
     assert(Math.imul(0x12345678, 123), -1088058456);
+    assert(Math.imul(0xB505, 0xB504), 2147441940);
+    assert(Math.imul(0xB505, 0xB505), -2147479015);
+    assert(Math.imul((-2)**31, (-2)**31), 0);
+    assert(Math.imul(2**31-1, 2**31-1), 1);
     assert(Math.fround(0.1), 0.10000000149011612);
-    assert(Math.hypot() == 0);
-    assert(Math.hypot(-2) == 2);
-    assert(Math.hypot(3, 4) == 5);
+    assert(Math.hypot(), 0);
+    assert(Math.hypot(-2), 2);
+    assert(Math.hypot(3, 4), 5);
     assert(Math.abs(Math.hypot(3, 4, 5) - 7.0710678118654755) <= 1e-15);
 }
 
@@ -327,6 +368,10 @@ function test_number()
     assert(+"  123   ", 123);
     assert(+"0b111", 7);
     assert(+"0o123", 83);
+    assert(parseFloat("2147483647"), 2147483647);
+    assert(parseFloat("2147483648"), 2147483648);
+    assert(parseFloat("-2147483647"), -2147483647);
+    assert(parseFloat("-2147483648"), -2147483648);
     assert(parseFloat("0x1234"), 0);
     assert(parseFloat("Infinity"), Infinity);
     assert(parseFloat("-Infinity"), -Infinity);
@@ -335,6 +380,11 @@ function test_number()
     assert(Number.isNaN(Number("+")));
     assert(Number.isNaN(Number("-")));
     assert(Number.isNaN(Number("\x00a")));
+
+    // TODO: Fix rounding errors on Windows/Cygwin.
+    if (typeof os !== 'undefined' && ['win32', 'cygwin'].includes(os.platform)) {
+        return;
+    }
 
     assert((25).toExponential(0), "3e+1");
     assert((-25).toExponential(0), "-3e+1");
@@ -379,7 +429,7 @@ function test_eval()
     assert(eval("if (0) 2; else 3;"), 3);
 
     assert(f.call(1, "this"), 1);
-    
+
     a = 2;
     assert(eval("a"), 2);
 
@@ -424,7 +474,7 @@ function test_typed_array()
     a[2] = 0.5;
     a[3] = 1233.5;
     assert(a.toString(), "0,2,0,255");
-    
+
     buffer = new ArrayBuffer(16);
     assert(buffer.byteLength, 16);
     a = new Uint32Array(buffer, 12, 1);
@@ -436,7 +486,7 @@ function test_typed_array()
 
     a = new Float32Array(buffer, 8, 1);
     a[0] = 1;
-    
+
     a = new Uint8Array(buffer);
 
     str = a.toString();
@@ -481,26 +531,105 @@ function test_json()
 
 function test_date()
 {
-    var d = new Date(1506098258091), a, s;
+    // Date Time String format is YYYY-MM-DDTHH:mm:ss.sssZ
+    // accepted date formats are: YYYY, YYYY-MM and YYYY-MM-DD
+    // accepted time formats are: THH:mm, THH:mm:ss, THH:mm:ss.sss
+    // expanded years are represented with 6 digits prefixed by + or -
+    // -000000 is invalid.
+    // A string containing out-of-bounds or nonconforming elements
+    //   is not a valid instance of this format.
+    // Hence the fractional part after . should have 3 digits and how
+    // a different number of digits is handled is implementation defined.
+    assert(Date.parse(""), NaN);
+    assert(Date.parse("2000"), 946684800000);
+    assert(Date.parse("2000-01"), 946684800000);
+    assert(Date.parse("2000-01-01"), 946684800000);
+    //assert(Date.parse("2000-01-01T"), NaN);
+    //assert(Date.parse("2000-01-01T00Z"), NaN);
+    assert(Date.parse("2000-01-01T00:00Z"), 946684800000);
+    assert(Date.parse("2000-01-01T00:00:00Z"), 946684800000);
+    assert(Date.parse("2000-01-01T00:00:00.1Z"), 946684800100);
+    assert(Date.parse("2000-01-01T00:00:00.10Z"), 946684800100);
+    assert(Date.parse("2000-01-01T00:00:00.100Z"), 946684800100);
+    assert(Date.parse("2000-01-01T00:00:00.1000Z"), 946684800100);
+    assert(Date.parse("2000-01-01T00:00:00+00:00"), 946684800000);
+    //assert(Date.parse("2000-01-01T00:00:00+00:30"), 946686600000);
+    var d = new Date("2000T00:00");  // Jan 1st 2000, 0:00:00 local time
+    assert(typeof d === 'object' && d.toString() != 'Invalid Date');
+    assert((new Date('Jan 1 2000')).toISOString(),
+           d.toISOString());
+    assert((new Date('Jan 1 2000 00:00')).toISOString(),
+           d.toISOString());
+    assert((new Date('Jan 1 2000 00:00:00')).toISOString(),
+           d.toISOString());
+    assert((new Date('Jan 1 2000 00:00:00 GMT+0100')).toISOString(),
+           '1999-12-31T23:00:00.000Z');
+    assert((new Date('Jan 1 2000 00:00:00 GMT+0200')).toISOString(),
+           '1999-12-31T22:00:00.000Z');
+    assert((new Date('Sat Jan 1 2000')).toISOString(),
+           d.toISOString());
+    assert((new Date('Sat Jan 1 2000 00:00')).toISOString(),
+           d.toISOString());
+    assert((new Date('Sat Jan 1 2000 00:00:00')).toISOString(),
+           d.toISOString());
+    assert((new Date('Sat Jan 1 2000 00:00:00 GMT+0100')).toISOString(),
+           '1999-12-31T23:00:00.000Z');
+    assert((new Date('Sat Jan 1 2000 00:00:00 GMT+0200')).toISOString(),
+           '1999-12-31T22:00:00.000Z');
+
+    var d = new Date(1506098258091);
     assert(d.toISOString(), "2017-09-22T16:37:38.091Z");
     d.setUTCHours(18, 10, 11);
     assert(d.toISOString(), "2017-09-22T18:10:11.091Z");
-    a = Date.parse(d.toISOString());
+    var a = Date.parse(d.toISOString());
     assert((new Date(a)).toISOString(), d.toISOString());
-    s = new Date("2020-01-01T01:01:01.1Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:01.100Z");
-    s = new Date("2020-01-01T01:01:01.12Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:01.120Z");
-    s = new Date("2020-01-01T01:01:01.123Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:01.123Z");
-    s = new Date("2020-01-01T01:01:01.1234Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:01.123Z");
-    s = new Date("2020-01-01T01:01:01.12345Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:01.123Z");
-    s = new Date("2020-01-01T01:01:01.1235Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:01.124Z");
-    s = new Date("2020-01-01T01:01:01.9999Z").toISOString();
-    assert(s ==  "2020-01-01T01:01:02.000Z");
+
+    assert((new Date("2020-01-01T01:01:01.123Z")).toISOString(),
+                     "2020-01-01T01:01:01.123Z");
+    /* implementation defined behavior */
+    assert((new Date("2020-01-01T01:01:01.1Z")).toISOString(),
+                     "2020-01-01T01:01:01.100Z");
+    assert((new Date("2020-01-01T01:01:01.12Z")).toISOString(),
+                     "2020-01-01T01:01:01.120Z");
+    assert((new Date("2020-01-01T01:01:01.1234Z")).toISOString(),
+                     "2020-01-01T01:01:01.123Z");
+    assert((new Date("2020-01-01T01:01:01.12345Z")).toISOString(),
+                     "2020-01-01T01:01:01.123Z");
+    assert((new Date("2020-01-01T01:01:01.1235Z")).toISOString(),
+                     "2020-01-01T01:01:01.123Z");
+    assert((new Date("2020-01-01T01:01:01.9999Z")).toISOString(),
+                     "2020-01-01T01:01:01.999Z");
+
+    assert(Date.UTC(2017), 1483228800000);
+    assert(Date.UTC(2017, 9), 1506816000000);
+    assert(Date.UTC(2017, 9, 22), 1508630400000);
+    assert(Date.UTC(2017, 9, 22, 18), 1508695200000);
+    assert(Date.UTC(2017, 9, 22, 18, 10), 1508695800000);
+    assert(Date.UTC(2017, 9, 22, 18, 10, 11), 1508695811000);
+    assert(Date.UTC(2017, 9, 22, 18, 10, 11, 91), 1508695811091);
+
+    assert(Date.UTC(NaN), NaN);
+    assert(Date.UTC(2017, NaN), NaN);
+    assert(Date.UTC(2017, 9, NaN), NaN);
+    assert(Date.UTC(2017, 9, 22, NaN), NaN);
+    assert(Date.UTC(2017, 9, 22, 18, NaN), NaN);
+    assert(Date.UTC(2017, 9, 22, 18, 10, NaN), NaN);
+    assert(Date.UTC(2017, 9, 22, 18, 10, 11, NaN), NaN);
+    assert(Date.UTC(2017, 9, 22, 18, 10, 11, 91, NaN), 1508695811091);
+
+    // TODO: Fix rounding errors on Windows/Cygwin.
+    if (!(typeof os !== 'undefined' && ['win32', 'cygwin'].includes(os.platform))) {
+        // from test262/test/built-ins/Date/UTC/fp-evaluation-order.js
+        assert(Date.UTC(1970, 0, 1, 80063993375, 29, 1, -288230376151711740), 29312,
+               'order of operations / precision in MakeTime');
+        assert(Date.UTC(1970, 0, 213503982336, 0, 0, 0, -18446744073709552000), 34447360,
+               'precision in MakeDate');
+    }
+    //assert(Date.UTC(2017 - 1e9, 9 + 12e9), 1506816000000);  // node fails this
+    assert(Date.UTC(2017, 9, 22 - 1e10, 18 + 24e10), 1508695200000);
+    assert(Date.UTC(2017, 9, 22, 18 - 1e10, 10 + 60e10), 1508695800000);
+    assert(Date.UTC(2017, 9, 22, 18, 10 - 1e10, 11 + 60e10), 1508695811000);
+    assert(Date.UTC(2017, 9, 22, 18, 10, 11 - 1e12, 91 + 1000e12), 1508695811091);
 }
 
 function test_regexp()
@@ -525,7 +654,7 @@ function test_regexp()
 
     a = /(\.(?!com|org)|\/)/.exec("ah.com");
     assert(a, null);
-    
+
     a = /(?=(a+))/.exec("baaabac");
     assert(a.index === 1 && a[0] === "" && a[1] === "aaa");
 
@@ -587,6 +716,20 @@ function test_map()
 {
     var a, i, n, tab, o, v;
     n = 1000;
+
+    a = new Map();
+    for (var i = 0; i < n; i++) {
+        a.set(i, i);
+    }
+    a.set(-2147483648, 1);
+    assert(a.get(-2147483648), 1);
+    assert(a.get(-2147483647 - 1), 1);
+    assert(a.get(-2147483647.5 - 0.5), 1);
+
+    a.set(1n, 1n);
+    assert(a.get(1n), 1n);
+    assert(a.get(2n**1000n - (2n**1000n - 1n)), 1n);
+
     a = new Map();
     tab = [];
     for(i = 0; i < n; i++) {
@@ -602,7 +745,7 @@ function test_map()
     }
 
     i = 0;
-    a.forEach(function (v, o) { 
+    a.forEach(function (v, o) {
         assert(o, tab[i++][0]);
         assert(a.has(o));
         assert(a.delete(o));
@@ -625,7 +768,7 @@ function test_weak_map()
         a.set(o, v);
     }
     o = null;
-    
+
     n2 = n >> 1;
     for(i = 0; i < n2; i++) {
         a.delete(tab[i][0]);

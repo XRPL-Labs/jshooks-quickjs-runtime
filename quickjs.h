@@ -126,7 +126,7 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
 {
     return 0;
 }
-    
+
 #elif defined(JS_NAN_BOXING)
 
 typedef uint64_t JSValue;
@@ -191,7 +191,7 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
     tag = JS_VALUE_GET_TAG(v);
     return tag == (JS_NAN >> 32);
 }
-    
+
 #else /* !JS_NAN_BOXING */
 
 typedef union JSValueUnion {
@@ -309,7 +309,7 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
 #define JS_EVAL_FLAG_BACKTRACE_BARRIER (1 << 6)
 /* allow top-level await in normal script. JS_Eval() returns a
    promise. Only allowed with JS_EVAL_TYPE_GLOBAL */
-#define JS_EVAL_FLAG_ASYNC (1 << 7) 
+#define JS_EVAL_FLAG_ASYNC (1 << 7)
 
 typedef JSValue JSCFunction(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv);
 typedef JSValue JSCFunctionMagic(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic);
@@ -502,7 +502,10 @@ typedef struct JSClassDef {
     JSClassExoticMethods *exotic;
 } JSClassDef;
 
+#define JS_INVALID_CLASS_ID 0
 JSClassID JS_NewClassID(JSClassID *pclass_id);
+/* Returns the class ID if `v` is an object, otherwise returns JS_INVALID_CLASS_ID. */
+JSClassID JS_GetClassID(JSValue v);
 int JS_NewClass(JSRuntime *rt, JSClassID class_id, const JSClassDef *class_def);
 int JS_IsRegisteredClass(JSRuntime *rt, JSClassID class_id);
 
@@ -550,23 +553,21 @@ JSValue JS_NewBigUint64(JSContext *ctx, uint64_t v);
 
 static js_force_inline JSValue JS_NewFloat64(JSContext *ctx, double d)
 {
-    JSValue v;
     int32_t val;
     union {
         double d;
         uint64_t u;
     } u, t;
-    u.d = d;
-    val = (int32_t)d;
-    t.d = val;
-    /* -0 cannot be represented as integer, so we compare the bit
-        representation */
-    if (u.u == t.u) {
-        v = JS_MKVAL(JS_TAG_INT, val);
-    } else {
-        v = __JS_NewFloat64(ctx, d);
+    if (d >= INT32_MIN && d <= INT32_MAX) {
+        u.d = d;
+        val = (int32_t)d;
+        t.d = val;
+        /* -0 cannot be represented as integer, so we compare the bit
+           representation */
+        if (u.u == t.u)
+            return JS_MKVAL(JS_TAG_INT, val);
     }
-    return v;
+    return __JS_NewFloat64(ctx, d);
 }
 
 static inline JS_BOOL JS_IsNumber(JSValueConst v)
@@ -973,7 +974,7 @@ static inline JSValue JS_NewCFunctionMagic(JSContext *ctx, JSCFunctionMagic *fun
 {
     return JS_NewCFunction2(ctx, (JSCFunction *)func, name, length, cproto, magic);
 }
-void JS_SetConstructor(JSContext *ctx, JSValueConst func_obj, 
+void JS_SetConstructor(JSContext *ctx, JSValueConst func_obj,
                        JSValueConst proto);
 
 /* C property definition */
