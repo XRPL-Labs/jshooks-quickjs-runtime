@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  builder:
+  wasmbuild:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,24 +19,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker container
         run: docker build --tag quickjs-wasm-builder .
 
-      - name: Run Docker container
+      - name: Run Docker Container to build qjsc
         run: docker run --rm --platform linux/amd64 -v ${{ github.workspace }}/build:/wasi/build quickjs-wasm-builder qjsc
 
-      - name: Upload artifact
+      - name: Upload artifact compiler, qjsc.wasm
         uses: actions/upload-artifact@v4
         with:
-          name: qjsc-wasm
+          name: qjsc.wasm
           path: build/qjsc.wasm
+
+      - name: Run Docker Container to build qjs
+        run: docker run --rm --platform linux/amd64 -v ${{ github.workspace }}/build:/wasi/build quickjs-wasm-builder qjs
+
+      - name: Upload artifact runtime, qjs.wasm
+        uses: actions/upload-artifact@v4
+        with:
+          name: qjs.wasm
+          path: build/qjs.wasm
