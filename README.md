@@ -1,4 +1,6 @@
-# QuickJS Runtime for Hooks
+# QuickJS Runtime for Hooks 
+
+[![Build qjsc.wasm Builder image and WASM Binary using Docker](https://github.com/XRPL-Labs/jshooks-quickjs-runtime/actions/workflows/build.yml/badge.svg)](https://github.com/XRPL-Labs/jshooks-quickjs-runtime/actions/workflows/build.yml)
 
 ### JS Runtime for on chain Rule Engine (Smart Contracts)
 
