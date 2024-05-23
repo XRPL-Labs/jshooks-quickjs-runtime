@@ -26,3 +26,6 @@ run_sunspider_like
 /*.wasm
 /*.js
 /*.bc
+/out.c
+/build/qjsc.wasm
+/build/qjs.wasm
