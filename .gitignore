@@ -1,3 +1,4 @@
+.DS_Store
 *.a
 .obj/
 tests/bjson.so
@@ -22,3 +23,6 @@ unicode
 unicode_gen
 run_octane
 run_sunspider_like
+/*.wasm
+/*.js
+/*.bc
