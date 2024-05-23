@@ -25,7 +25,7 @@ jobs:
         run: docker build --tag quickjs-wasm-builder .
 
       - name: Run Docker Container to build qjsc
-        run: mkdir ${{ github.workspace }}/build && touch ${{ github.workspace }}/build/qjsc.wasm && docker run --rm --platform linux/amd64 -v ${{ github.workspace }}/build:/wasi/build quickjs-wasm-builder qjsc
+        run: mkdir -p ${{ github.workspace }}/build && touch ${{ github.workspace }}/build/qjsc.wasm && docker run --rm --platform linux/amd64 -v ${{ github.workspace }}/build:/wasi/build quickjs-wasm-builder qjsc
 
       - name: Upload artifact compiler, qjsc.wasm
         uses: actions/upload-artifact@v4
@@ -34,7 +34,7 @@ jobs:
           path: build/qjsc.wasm
 
       - name: Run Docker Container to build qjs
-        run: mkdir ${{ github.workspace }}/build && touch ${{ github.workspace }}/build/qjs.wasm && docker run --rm --platform linux/amd64 -v ${{ github.workspace }}/build:/wasi/build quickjs-wasm-builder qjs
+        run: mkdir -p ${{ github.workspace }}/build && touch ${{ github.workspace }}/build/qjs.wasm && docker run --rm --platform linux/amd64 -v ${{ github.workspace }}/build:/wasi/build quickjs-wasm-builder qjs
 
       - name: Upload artifact runtime, qjs.wasm
         uses: actions/upload-artifact@v4
