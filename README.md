@@ -19,7 +19,7 @@ You can conveniently build using Docker.
 
 To build the container image for the build process:
 
-```
+```bash
 docker build --tag quickjs-wasm-builder .
 ```
 
@@ -27,7 +27,7 @@ docker build --tag quickjs-wasm-builder .
 
 To build the `qjsc.wasm` JS Compiler WebAssembly binary using the previously created container:
 
-```
+```bash
 docker run --rm --platform linux/amd64 -v $(pwd)/build:/wasi/build \
     quickjs-wasm-builder qjsc
 ```
@@ -36,7 +36,7 @@ docker run --rm --platform linux/amd64 -v $(pwd)/build:/wasi/build \
 
 To build `qjs.wasm` (QuickJS Runtime) WebAssembly binary using the previously created container:
 
-```
+```bash
 docker run --rm --platform linux/amd64 -v $(pwd)/build:/wasi/build \
     quickjs-wasm-builder qjs
 ```
@@ -50,7 +50,7 @@ To run the `.wasm` binaries, we're using `wasmedge`: we need a virtual filesyste
 
 After building `qjsc.wasm`:
 
-```
+```bash
 wasmedge --dir=.:. ./build/qjsc.wasm -c -o whatever.bc whatever.js
 ```
 
@@ -58,7 +58,7 @@ wasmedge --dir=.:. ./build/qjsc.wasm -c -o whatever.bc whatever.js
 
 After building `qjs.wasm`:
 
-```
+```bash
 wasmedge --dir=.:. ./build/qjs.wasm -e "console.log('Hello World');"
 ```
 
@@ -67,18 +67,19 @@ wasmedge --dir=.:. ./build/qjs.wasm -e "console.log('Hello World');"
 To use the above `.wasm` files in your browser, create Javascript code like below, and save it as `qjsc.mjs`.
 You can build this `.mjs` file for the browser with `esbuild`:
 
-```
+```bash
 esbuild qjsc.mjs --bundle --minify --tree-shaking=true --platform=browser --format=esm --target=es2017 > qjsc-browser.js
 ```
 
 Now you have a `qjsc-browser.js` file to use in the browser, which you can include as modules:
-```
+
+```html
 <script type="module" src="./qjsc-browser.js"></script>
 ```
 
 `qjsc.mjs` example source code:
 
-```
+```javascript
 import { WASI } from "@runno/wasi"
 import { Buffer } from 'buffer/' // Browser needs this, node (CLI) doesn't
 
@@ -114,6 +115,6 @@ result.then(r => {
 
 Upload `qjsc.wasm` and create a `.js` file @ the virtual filesystem, e.g. `sample.js`, and then use argument:
 
-```
+```bash
 -c -o sample.bc sample.js
 ```
