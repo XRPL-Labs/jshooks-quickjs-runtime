@@ -5,6 +5,8 @@ on:
     branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main", "dev" ]
+  schedule:
+    - cron: "1 0 1 * *"   # minute hour dayofmonth month dayofweek, at least once a month
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,3 +43,16 @@ jobs:
         with:
           name: qjs.wasm
           path: build/qjs.wasm
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: false
+          draft: false
+          make_latest: true
+          name: autorelease
+          tag_name: autorelease
+          files: |
+            build/qjs.wasm
+            build/qjsc.wasm
+          fail_on_unmatched_files: true
