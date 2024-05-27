@@ -2,6 +2,11 @@
 
 [![Build qjsc.wasm Builder image and WASM Binary using Docker](https://github.com/XRPL-Labs/jshooks-quickjs-runtime/actions/workflows/build.yml/badge.svg)](https://github.com/XRPL-Labs/jshooks-quickjs-runtime/actions/workflows/build.yml)
 
+### Live loading
+
+The latest version of the `qjsc` build is available (CORS enabled) at:
+- https://wasm.xahau.tech/qjsc.wasm
+
 ### JS Runtime for on chain Rule Engine (Smart Contracts)
 
 ##### This project is based on:
